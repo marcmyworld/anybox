@@ -1,11 +1,17 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-color-preset="purple">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>AnyBox</title>
   <meta name="description" content="Keybox Inspector and Attestation Downloader" />
   <meta name="color-scheme" content="dark" />
+
+  <!-- Geist & Geist Mono Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23d0bcff%22><path d=%22M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z%22/></svg>">
 </head>
@@ -17,10 +23,36 @@
         <h1 class="app-title">AnyBox</h1>
       </div>
       <div class="spacer"></div>
-      <div class="network-chip" id="network-chip">
-        <span class="network-dot" id="status-dot"></span>
-        <span class="network-label" id="status-badge">Checking</span>
-        <span class="network-latency" id="status-meta">-- ms</span>
+      
+      <div class="header-controls">
+        <!-- Live Status Chip -->
+        <div class="network-chip" id="network-chip">
+          <span class="network-dot" id="status-dot"></span>
+          <span class="network-label" id="status-badge">Checking</span>
+          <span class="network-latency" id="status-meta">-- ms</span>
+        </div>
+
+        <!-- Theming Color Palette Menu -->
+        <div class="theme-picker-anchor">
+          <button id="btn-theme-palette" class="m3-icon-button" aria-label="Theme Color" title="Choose Theme Color">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8s1.5.67 1.5 1.5S7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+            </svg>
+          </button>
+          <div id="theme-popover" class="theme-popover hidden">
+            <div class="theme-popover-header">
+              <span class="theme-popover-title">Theme Palette</span>
+            </div>
+            <div class="theme-swatches-grid">
+              <button class="theme-swatch" data-theme="purple" title="Purple (Lavender)" style="--swatch-color: #d0bcff;"></button>
+              <button class="theme-swatch" data-theme="blue" title="Blue (Pixel)" style="--swatch-color: #a8c7fa;"></button>
+              <button class="theme-swatch" data-theme="green" title="Green (Forest)" style="--swatch-color: #9cd69b;"></button>
+              <button class="theme-swatch" data-theme="orange" title="Orange (Amber)" style="--swatch-color: #ffb68c;"></button>
+              <button class="theme-swatch" data-theme="pink" title="Pink (Rose)" style="--swatch-color: #ffb0cd;"></button>
+              <button class="theme-swatch" data-theme="cyan" title="Cyan (Teal)" style="--swatch-color: #80d5e2;"></button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </header>

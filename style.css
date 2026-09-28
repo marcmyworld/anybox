@@ -1,11 +1,15 @@
 /* ==========================================================================
-   AnyBox — Material Design 3 Expressive (Specter Style)
+   AnyBox — Material Design 3 Expressive with Geist Font & Color Presets
    ========================================================================== */
 
 :root {
   color-scheme: dark;
 
-  /* Material Design 3 Dark Theme Tokens (Monet Default / Purple-Blue) */
+  /* Typography: Geist & Geist Mono */
+  --md-ref-typeface: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --md-ref-monospace: "Geist Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  /* Material Design 3 Dark Theme Base Surfaces */
   --md-sys-color-surface: #141318;
   --md-sys-color-surface-dim: #141318;
   --md-sys-color-surface-bright: #3b383e;
@@ -20,6 +24,7 @@
   --md-sys-color-outline: #938f99;
   --md-sys-color-outline-variant: #49454f;
 
+  /* Default Preset: Purple / Lavender */
   --md-sys-color-primary: #d0bcff;
   --md-sys-color-on-primary: #381e72;
   --md-sys-color-primary-container: #4f378b;
@@ -30,23 +35,12 @@
   --md-sys-color-secondary-container: #4a4458;
   --md-sys-color-on-secondary-container: #e8def8;
 
-  --md-sys-color-tertiary: #efb8c8;
-  --md-sys-color-on-tertiary: #492532;
-  --md-sys-color-tertiary-container: #633b48;
-  --md-sys-color-on-tertiary-container: #ffd8e4;
-
   --md-sys-color-error: #f2b8b5;
   --md-sys-color-on-error: #601410;
   --md-sys-color-error-container: #8c1d18;
   --md-sys-color-on-error-container: #f9dedc;
 
   --md-color-success: #81c784;
-  --md-color-success-container: #1b5e20;
-  --md-color-success-on: #c8e6c9;
-
-  /* Typography */
-  --md-ref-typeface: "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --md-ref-monospace: "JetBrains Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
 
   /* Shape tokens */
   --md-shape-corner-small: 8px;
@@ -59,6 +53,59 @@
   --md-state-hover: rgba(255, 255, 255, 0.08);
   --md-state-pressed: rgba(255, 255, 255, 0.12);
 }
+
+/* ==========================================================================
+   M3 Dynamic Color Presets (Monet Palettes)
+   ========================================================================== */
+
+[data-color-preset="blue"] {
+  --md-sys-color-primary: #a8c7fa;
+  --md-sys-color-on-primary: #062e6f;
+  --md-sys-color-primary-container: #0842a0;
+  --md-sys-color-on-primary-container: #d3e3fd;
+  --md-sys-color-secondary-container: #3d4758;
+  --md-sys-color-on-secondary-container: #d8e2f9;
+}
+
+[data-color-preset="green"] {
+  --md-sys-color-primary: #9cd69b;
+  --md-sys-color-on-primary: #00390f;
+  --md-sys-color-primary-container: #1b5223;
+  --md-sys-color-on-primary-container: #b8f3b6;
+  --md-sys-color-secondary-container: #3e4a3c;
+  --md-sys-color-on-secondary-container: #d9e6d7;
+}
+
+[data-color-preset="orange"] {
+  --md-sys-color-primary: #ffb68c;
+  --md-sys-color-on-primary: #522300;
+  --md-sys-color-primary-container: #753400;
+  --md-sys-color-on-primary-container: #ffdbc9;
+  --md-sys-color-secondary-container: #51433b;
+  --md-sys-color-on-secondary-container: #f2dfd6;
+}
+
+[data-color-preset="pink"] {
+  --md-sys-color-primary: #ffb0cd;
+  --md-sys-color-on-primary: #5e1136;
+  --md-sys-color-primary-container: #7b294d;
+  --md-sys-color-on-primary-container: #ffd9e4;
+  --md-sys-color-secondary-container: #534349;
+  --md-sys-color-on-secondary-container: #f7dee6;
+}
+
+[data-color-preset="cyan"] {
+  --md-sys-color-primary: #80d5e2;
+  --md-sys-color-on-primary: #00363d;
+  --md-sys-color-primary-container: #004f58;
+  --md-sys-color-on-primary-container: #9cebf8;
+  --md-sys-color-secondary-container: #3b484b;
+  --md-sys-color-on-secondary-container: #d6e5e8;
+}
+
+/* ==========================================================================
+   Global Reset & Layout
+   ========================================================================== */
 
 * {
   box-sizing: border-box;
@@ -79,14 +126,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 16px 32px 16px;
+  padding: 0 16px 36px 16px;
 }
 
-/* App Top Bar (Specter Style) */
+/* App Top Bar */
 .app-top-bar {
   width: 100%;
   max-width: 768px;
-  padding: 16px 0 24px 0;
+  padding: 20px 0 24px 0;
 }
 
 .app-top-bar-inner {
@@ -98,8 +145,8 @@ body {
 
 .app-title {
   font-size: 1.5rem;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--md-sys-color-on-surface);
 }
 
@@ -107,7 +154,13 @@ body {
   flex: 1;
 }
 
-/* Network Chip (M3 Assist Chip) */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Network Chip */
 .network-chip {
   display: inline-flex;
   align-items: center;
@@ -143,6 +196,68 @@ body {
   opacity: 0.8;
 }
 
+/* Theming Popover & Anchor */
+.theme-picker-anchor {
+  position: relative;
+}
+
+.theme-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  border-radius: var(--md-shape-corner-large);
+  padding: 14px;
+  z-index: 100;
+  animation: m3MenuIn 0.15s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes m3MenuIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.theme-popover-header {
+  margin-bottom: 10px;
+}
+
+.theme-popover-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.theme-swatches-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.theme-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--swatch-color);
+  border: 2px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-swatch:hover {
+  transform: scale(1.15);
+}
+
+.theme-swatch.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px var(--md-sys-color-surface);
+}
+
 /* Main Container */
 .main-content {
   width: 100%;
@@ -156,9 +271,10 @@ body {
 .m3-card {
   background-color: var(--md-sys-color-surface-container-low);
   border-radius: var(--md-shape-corner-extra-large);
-  padding: 20px;
+  padding: 22px;
   position: relative;
   border: none;
+  transition: background-color 0.25s ease;
 }
 
 /* Action Trigger Card */
@@ -171,15 +287,15 @@ body {
 
 .m3-title-large {
   font-size: 1.25rem;
-  font-weight: 500;
-  letter-spacing: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--md-sys-color-on-surface);
 }
 
 .m3-body-medium {
   font-size: 0.875rem;
   font-weight: 400;
-  letter-spacing: 0.25px;
+  letter-spacing: 0.15px;
   color: var(--md-sys-color-on-surface-variant);
   margin-top: 4px;
 }
@@ -195,6 +311,7 @@ body {
   height: 40px;
   padding: 0 24px;
   border-radius: var(--md-shape-corner-full);
+  font-family: var(--md-ref-typeface);
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0.1px;
@@ -218,7 +335,7 @@ body {
 
 .m3-filled-button:hover:not(:disabled) {
   box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.15);
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 92%, #ffffff);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 90%, #ffffff);
 }
 
 .m3-btn-download {
@@ -232,7 +349,7 @@ body {
 }
 
 .m3-filled-tonal-button:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container) 92%, #ffffff);
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container) 90%, #ffffff);
 }
 
 .m3-outlined-button {
@@ -264,7 +381,7 @@ body {
   border: none;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .m3-icon-button:hover {
@@ -382,6 +499,7 @@ body {
   background-color: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--md-sys-color-outline-variant);
   color: var(--md-sys-color-on-surface);
+  font-family: var(--md-ref-typeface);
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -460,7 +578,7 @@ body {
 
 .guide-title {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface);
   margin-bottom: 14px;
 }

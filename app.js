@@ -12,6 +12,50 @@
     metadata: null,
   };
 
+  // Theme Management
+  const btnThemePalette = document.getElementById('btn-theme-palette');
+  const themePopover = document.getElementById('theme-popover');
+  const themeSwatches = document.querySelectorAll('.theme-swatch');
+
+  const savedTheme = localStorage.getItem('anybox_theme') || 'purple';
+  applyTheme(savedTheme);
+
+  function applyTheme(themeName) {
+    document.documentElement.setAttribute('data-color-preset', themeName);
+    localStorage.setItem('anybox_theme', themeName);
+
+    themeSwatches.forEach(swatch => {
+      if (swatch.getAttribute('data-theme') === themeName) {
+        swatch.classList.add('active');
+      } else {
+        swatch.classList.remove('active');
+      }
+    });
+  }
+
+  if (btnThemePalette && themePopover) {
+    btnThemePalette.addEventListener('click', (e) => {
+      e.stopPropagation();
+      themePopover.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!themePopover.contains(e.target) && e.target !== btnThemePalette) {
+        themePopover.classList.add('hidden');
+      }
+    });
+
+    themeSwatches.forEach(swatch => {
+      swatch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const theme = swatch.getAttribute('data-theme');
+        applyTheme(theme);
+        themePopover.classList.add('hidden');
+        showToast(`Theme updated: ${swatch.getAttribute('title').split(' ')[0]}`);
+      });
+    });
+  }
+
   // DOM Elements
   const statusDot = document.getElementById('status-dot');
   const statusBadge = document.getElementById('status-badge');
