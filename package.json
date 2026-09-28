@@ -2,9 +2,12 @@
   "name": "anybox",
   "version": "1.0.0",
   "description": "Modern web application to inspect and download active Android attestation keybox payloads",
+  "type": "module",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve ."
+    "dev": "node server.js",
+    "start": "node server.js",
+    "serve": "npx serve ."
   },
   "keywords": [
     "keybox",

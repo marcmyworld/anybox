@@ -1,15 +1,28 @@
 /**
  * AnyBox — Material Design 3 Expressive Application Logic
+ * Supports multi-source attestation: Specter (rawbin) & Integrity-Box (MeowDump)
  */
 
 (function () {
   'use strict';
+
+  // State Management
+  let currentSource = localStorage.getItem('anybox_source') || 'specter';
+  let selectedSpecterProvider = 'auto';
+  let sourcesMetadata = null;
 
   let currentKeybox = {
     rawBase64: null,
     decodedXml: null,
     hash: null,
     metadata: null,
+    source: null,
+    provider: null,
+    version: null,
+    serial: null,
+    softbanned: false,
+    revoked: false,
+    sizeBytes: 0,
   };
 
   // Theme Management
@@ -57,11 +70,19 @@
   }
 
   // DOM Elements
+  const networkChip = document.getElementById('network-chip');
   const statusDot = document.getElementById('status-dot');
   const statusBadge = document.getElementById('status-badge');
   const statusMeta = document.getElementById('status-meta');
   const statusNote = document.getElementById('status-note');
   const btnRefreshStatus = document.getElementById('btn-refresh-status');
+
+  const sourceChips = document.querySelectorAll('.source-chip');
+  const sourceHint = document.getElementById('source-hint');
+  const providerSelectRow = document.getElementById('provider-select-row');
+  const specterProviderSelect = document.getElementById('specter-provider-select');
+  const specterCatalogBadge = document.getElementById('specter-catalog-badge');
+  const chipUpstream = document.getElementById('chip-upstream');
 
   const btnFetch = document.getElementById('btn-fetch');
   const btnFetchText = document.getElementById('btn-fetch-text');
@@ -72,10 +93,14 @@
   const errorMessage = document.getElementById('error-message');
 
   const resultsSection = document.getElementById('results-section');
+  const metaSourceTag = document.getElementById('meta-source-tag');
+  const metaStatusTag = document.getElementById('meta-status-tag');
   const metaDeviceId = document.getElementById('meta-device-id');
+  const metaProviderDetail = document.getElementById('meta-provider-detail');
   const metaAlgorithms = document.getElementById('meta-algorithms');
   const metaCerts = document.getElementById('meta-certs');
   const metaSize = document.getElementById('meta-size');
+  const metaSerial = document.getElementById('meta-serial');
   const metaHash = document.getElementById('meta-hash');
 
   const btnCopyHash = document.getElementById('btn-copy-hash');
@@ -89,6 +114,12 @@
   const viewerLineCount = document.getElementById('viewer-line-count');
 
   const toastContainer = document.getElementById('toast-container');
+
+  const SOURCE_HINTS = {
+    specter: 'rawbin.dpejoh.com cipher catalog with active provider pool',
+    integritybox: 'MeowDump Megatron payload with 10x Base64, Hex & ROT13 decoding',
+    upstream: 'Configured upstream endpoint via environment variables'
+  };
 
   // M3 Snackbar / Toast helper
   function showToast(message, duration = 2400) {
@@ -122,7 +153,7 @@
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // Check Service Status via local API endpoint
+  // Check Service Status via local API endpoint for active source
   async function checkServiceStatus() {
     statusBadge.textContent = 'Checking';
     if (statusDot) statusDot.className = 'network-dot';
@@ -132,7 +163,7 @@
     const startTime = performance.now();
 
     try {
-      const resp = await fetch('/api/status', { cache: 'no-store' });
+      const resp = await fetch(`/api/status?source=${encodeURIComponent(currentSource)}`, { cache: 'no-store' });
       const data = await resp.json();
 
       if (!resp.ok) {
@@ -140,10 +171,14 @@
       }
 
       const latency = data.latency || Math.round(performance.now() - startTime);
+      const isOnline = data.status && !data.status.toLowerCase().includes('offline') && !data.status.toLowerCase().includes('fail');
+
       statusBadge.textContent = data.status || 'Online';
-      if (statusDot) statusDot.className = 'network-dot online';
+      if (statusDot) statusDot.className = `network-dot ${isOnline ? 'online' : 'offline'}`;
       statusMeta.textContent = `${latency} ms`;
-      if (statusNote) statusNote.textContent = 'Online';
+      if (statusNote) {
+        statusNote.textContent = data.details ? `${data.status} (${data.details})` : data.status;
+      }
     } catch (err) {
       statusBadge.textContent = 'Offline';
       if (statusDot) statusDot.className = 'network-dot offline';
@@ -155,6 +190,93 @@
   }
 
   btnRefreshStatus.addEventListener('click', checkServiceStatus);
+  if (networkChip) {
+    networkChip.addEventListener('click', checkServiceStatus);
+  }
+
+  // Load Sources and Populate Providers Dropdown
+  async function initSources() {
+    try {
+      const res = await fetch('/api/sources', { cache: 'no-store' });
+      if (!res.ok) return;
+
+      sourcesMetadata = await res.json();
+
+      // Configure Custom Upstream chip availability
+      const upstreamSource = sourcesMetadata.sources?.find(s => s.id === 'upstream');
+      if (chipUpstream && upstreamSource && !upstreamSource.available) {
+        chipUpstream.title = 'Upstream URL not configured in environment';
+        chipUpstream.style.opacity = '0.6';
+      }
+
+      // Populate Specter providers
+      const specterSource = sourcesMetadata.sources?.find(s => s.id === 'specter');
+      const specterInfo = specterSource?.specterInfo;
+
+      if (specterInfo && Array.isArray(specterInfo.providers)) {
+        specterProviderSelect.innerHTML = '';
+
+        const autoOption = document.createElement('option');
+        autoOption.value = 'auto';
+        const workingStr = specterInfo.working ? ` [Preferred: ${specterInfo.working.source}]` : '';
+        autoOption.textContent = `Auto (Active Working Candidate)${workingStr}`;
+        specterProviderSelect.appendChild(autoOption);
+
+        specterInfo.providers.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = `${p.source}::${p.version}`;
+          const softTag = p.softbanned ? ' [Softbanned]' : '';
+          const revokedTag = p.revoked ? ' [Revoked]' : '';
+          opt.textContent = `${p.source} (${p.version})${softTag}${revokedTag}`;
+          specterProviderSelect.appendChild(opt);
+        });
+
+        if (specterCatalogBadge && specterInfo.providersCount) {
+          specterCatalogBadge.textContent = `${specterInfo.providersCount} providers`;
+        }
+      }
+    } catch (err) {
+      console.warn('Sources initialization notice:', err.message);
+    }
+  }
+
+  // Switch Active Source
+  function setSource(sourceKey) {
+    currentSource = sourceKey;
+    localStorage.setItem('anybox_source', sourceKey);
+
+    sourceChips.forEach(chip => {
+      const isSelected = chip.dataset.source === sourceKey;
+      chip.classList.toggle('active', isSelected);
+      chip.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+    });
+
+    if (sourceHint) {
+      sourceHint.textContent = SOURCE_HINTS[sourceKey] || '';
+    }
+
+    if (providerSelectRow) {
+      providerSelectRow.classList.toggle('hidden', sourceKey !== 'specter');
+    }
+
+    checkServiceStatus();
+  }
+
+  sourceChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const source = chip.dataset.source;
+      setSource(source);
+    });
+  });
+
+  if (specterProviderSelect) {
+    specterProviderSelect.addEventListener('change', (e) => {
+      selectedSpecterProvider = e.target.value;
+      if (specterCatalogBadge) {
+        specterCatalogBadge.textContent = selectedSpecterProvider === 'auto' ? 'Auto (Working)' : selectedSpecterProvider.replace('::', ' ');
+      }
+    });
+  }
 
   // Parse Keybox XML String
   function parseKeyboxXml(xmlString) {
@@ -211,7 +333,15 @@
     btnFetchText.textContent = 'Retrieving...';
 
     try {
-      const resp = await fetch('/api/keybox', { cache: 'no-store' });
+      let queryUrl = `/api/keybox?source=${encodeURIComponent(currentSource)}`;
+
+      if (currentSource === 'specter' && selectedSpecterProvider !== 'auto') {
+        const [prov, ver] = selectedSpecterProvider.split('::');
+        if (prov) queryUrl += `&provider=${encodeURIComponent(prov)}`;
+        if (ver) queryUrl += `&version=${encodeURIComponent(ver)}`;
+      }
+
+      const resp = await fetch(queryUrl, { cache: 'no-store' });
       const data = await resp.json();
 
       if (!resp.ok) {
@@ -242,14 +372,47 @@
         decodedXml,
         hash,
         metadata,
+        source: data.source || currentSource,
+        provider: data.provider || 'Active',
+        version: data.version || '',
+        serial: data.serial || null,
+        softbanned: Boolean(data.softbanned),
+        revoked: Boolean(data.revoked),
         sizeBytes: uint8Bytes.length,
       };
 
-      // Populate UI
+      // Populate Hero Card
       metaDeviceId.textContent = metadata.deviceId;
+
+      // Source Tag
+      const sourceNameMap = {
+        specter: 'Specter',
+        integritybox: 'Integrity-Box',
+        upstream: 'Custom Upstream'
+      };
+      metaSourceTag.textContent = sourceNameMap[currentKeybox.source] || currentKeybox.source;
+
+      // Status Tag
+      if (currentKeybox.revoked) {
+        metaStatusTag.textContent = 'REVOKED';
+        metaStatusTag.className = 'm3-status-tag revoked';
+      } else if (currentKeybox.softbanned) {
+        metaStatusTag.textContent = 'SOFTBANNED';
+        metaStatusTag.className = 'm3-status-tag softban';
+      } else {
+        metaStatusTag.textContent = 'ACTIVE / STRONG';
+        metaStatusTag.className = 'm3-status-tag strong';
+      }
+
+      // Provider Details
+      const provStr = currentKeybox.version ? `${currentKeybox.provider} (${currentKeybox.version})` : currentKeybox.provider;
+      metaProviderDetail.textContent = `Source: ${sourceNameMap[currentKeybox.source] || currentKeybox.source} • Provider: ${provStr}`;
+
+      // Specifications
       metaAlgorithms.textContent = metadata.algorithms;
       metaCerts.textContent = metadata.totalCerts;
       metaSize.textContent = `${(currentKeybox.sizeBytes / 1024).toFixed(2)} KB (${currentKeybox.sizeBytes} B)`;
+      metaSerial.textContent = currentKeybox.serial || 'Verified in Cert';
       metaHash.textContent = hash;
 
       // Populate XML preview
@@ -258,7 +421,7 @@
       viewerLineCount.textContent = `${lines} lines`;
 
       resultsSection.classList.remove('hidden');
-      showToast('Keybox verified');
+      showToast(`Keybox verified (${provStr})`);
     } catch (err) {
       showError('Retrieval Error', err.message || 'Failed to retrieve attestation payload.');
     } finally {
@@ -330,6 +493,7 @@
     }
   });
 
-  // Initial service status check on page load
-  checkServiceStatus();
+  // Initialize
+  setSource(currentSource);
+  initSources();
 })();
