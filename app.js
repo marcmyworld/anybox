@@ -1,5 +1,5 @@
 /**
- * AnyBox — Xiaomi HyperOS Client Application Logic
+ * AnyBox — Material Design 3 Expressive Application Logic
  */
 
 (function () {
@@ -14,11 +14,9 @@
 
   // DOM Elements
   const statusDot = document.getElementById('status-dot');
-  const statusPulse = document.getElementById('status-pulse');
   const statusBadge = document.getElementById('status-badge');
   const statusMeta = document.getElementById('status-meta');
   const statusNote = document.getElementById('status-note');
-  const statusTimestamp = document.getElementById('status-timestamp');
   const btnRefreshStatus = document.getElementById('btn-refresh-status');
 
   const btnFetch = document.getElementById('btn-fetch');
@@ -48,18 +46,17 @@
 
   const toastContainer = document.getElementById('toast-container');
 
-  // Toast notification helper
-  function showToast(message, duration = 2500) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    toastContainer.appendChild(toast);
+  // M3 Snackbar / Toast helper
+  function showToast(message, duration = 2400) {
+    const snackbar = document.createElement('div');
+    snackbar.className = 'm3-snackbar';
+    snackbar.textContent = message;
+    toastContainer.appendChild(snackbar);
 
     setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px) scale(0.95)';
-      toast.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
-      setTimeout(() => toast.remove(), 250);
+      snackbar.style.opacity = '0';
+      snackbar.style.transition = 'opacity 0.15s ease-out';
+      setTimeout(() => snackbar.remove(), 150);
     }, duration);
   }
 
@@ -83,10 +80,9 @@
 
   // Check Service Status via local API endpoint
   async function checkServiceStatus() {
-    statusBadge.textContent = 'Checking...';
-    if (statusDot) statusDot.className = 'beacon-core';
-    if (statusPulse) statusPulse.className = 'beacon-pulse';
-    statusMeta.textContent = 'Latency: -- ms';
+    statusBadge.textContent = 'Checking';
+    if (statusDot) statusDot.className = 'network-dot';
+    statusMeta.textContent = '-- ms';
     btnRefreshStatus.disabled = true;
 
     const startTime = performance.now();
@@ -100,21 +96,15 @@
       }
 
       const latency = data.latency || Math.round(performance.now() - startTime);
-      statusBadge.textContent = data.status || 'Active';
-      statusBadge.style.color = 'var(--hyper-green)';
-      if (statusDot) statusDot.className = 'beacon-core online';
-      if (statusPulse) statusPulse.className = 'beacon-pulse online';
-      statusMeta.textContent = `Latency: ${latency} ms`;
-      statusNote.textContent = 'Service is online and ready';
-      statusTimestamp.textContent = `Updated at ${new Date().toLocaleTimeString()}`;
+      statusBadge.textContent = data.status || 'Online';
+      if (statusDot) statusDot.className = 'network-dot online';
+      statusMeta.textContent = `${latency} ms`;
+      if (statusNote) statusNote.textContent = 'Online';
     } catch (err) {
-      statusBadge.textContent = 'Unavailable';
-      statusBadge.style.color = 'var(--hyper-rose)';
-      if (statusDot) statusDot.className = 'beacon-core offline';
-      if (statusPulse) statusPulse.className = 'beacon-pulse';
-      statusMeta.textContent = 'Offline';
-      statusNote.textContent = err.message || 'Service unreachable';
-      statusTimestamp.textContent = `Checked at ${new Date().toLocaleTimeString()}`;
+      statusBadge.textContent = 'Offline';
+      if (statusDot) statusDot.className = 'network-dot offline';
+      statusMeta.textContent = 'Err';
+      if (statusNote) statusNote.textContent = 'Unavailable';
     } finally {
       btnRefreshStatus.disabled = false;
     }
@@ -165,7 +155,7 @@
     return {
       deviceId,
       algorithms: algorithms.length ? algorithms.join(' + ') : 'ECDSA / RSA',
-      totalCerts: totalCerts || 'Multiple',
+      totalCerts: totalCerts ? `${totalCerts} certificates` : 'Multiple',
     };
   }
 
@@ -215,7 +205,7 @@
       metaDeviceId.textContent = metadata.deviceId;
       metaAlgorithms.textContent = metadata.algorithms;
       metaCerts.textContent = metadata.totalCerts;
-      metaSize.textContent = `${(currentKeybox.sizeBytes / 1024).toFixed(2)} KB (${currentKeybox.sizeBytes} bytes)`;
+      metaSize.textContent = `${(currentKeybox.sizeBytes / 1024).toFixed(2)} KB (${currentKeybox.sizeBytes} B)`;
       metaHash.textContent = hash;
 
       // Populate XML preview
@@ -224,7 +214,7 @@
       viewerLineCount.textContent = `${lines} lines`;
 
       resultsSection.classList.remove('hidden');
-      showToast('Keybox retrieved and verified successfully');
+      showToast('Keybox verified');
     } catch (err) {
       showError('Retrieval Error', err.message || 'Failed to retrieve attestation payload.');
     } finally {
@@ -256,9 +246,9 @@
     if (!currentKeybox.decodedXml) return;
     try {
       await navigator.clipboard.writeText(currentKeybox.decodedXml);
-      showToast('keybox.xml copied to clipboard');
+      showToast('Copied XML to clipboard');
     } catch (err) {
-      showToast('Could not copy to clipboard');
+      showToast('Copy failed');
     }
   });
 
@@ -267,9 +257,9 @@
     if (!currentKeybox.rawBase64) return;
     try {
       await navigator.clipboard.writeText(currentKeybox.rawBase64);
-      showToast('Base64 payload copied to clipboard');
+      showToast('Copied Base64 to clipboard');
     } catch (err) {
-      showToast('Could not copy to clipboard');
+      showToast('Copy failed');
     }
   });
 
@@ -278,9 +268,9 @@
     if (!currentKeybox.hash) return;
     try {
       await navigator.clipboard.writeText(currentKeybox.hash);
-      showToast('SHA-256 checksum copied');
+      showToast('Copied SHA-256 hash');
     } catch (err) {
-      showToast('Could not copy hash');
+      showToast('Copy failed');
     }
   });
 
