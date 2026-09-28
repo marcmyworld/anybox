@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnyBox — Keybox Inspector &amp; Downloader</title>
+  <meta name="description" content="Fast, clean web application to fetch, inspect, and download active keybox.xml attestation files with Xiaomi HyperOS design.">
+  <meta name="theme-color" content="#070a12">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+</head>
+<body>
+  <!-- Ambient background decorative lighting -->
+  <div class="ambient-glow glow-primary"></div>
+  <div class="ambient-glow glow-secondary"></div>
+  <div class="ambient-glow glow-tertiary"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-box">
+          <span class="logo-emoji">📦</span>
+        </div>
+        <div class="brand-text">
+          <h1 class="logo-title">AnyBox</h1>
+          <p class="logo-subtitle">Hardware Keystore Attestation</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="hyper-pill">HyperOS 2.0 Glass</span>
+      </div>
+    </header>
+
+    <!-- Live Status Banner (HyperOS Island Card) -->
+    <div class="glass-card status-card">
+      <div class="status-header">
+        <div class="status-indicator-group">
+          <div class="beacon-container">
+            <span class="beacon-pulse" id="status-pulse"></span>
+            <span class="beacon-core" id="status-dot"></span>
+          </div>
+          <span class="status-label">Service Health</span>
+          <span class="status-badge" id="status-badge">Connecting...</span>
+        </div>
+        <div class="status-actions">
+          <span class="status-meta" id="status-meta">Latency: -- ms</span>
+          <button id="btn-refresh-status" class="icon-button" title="Refresh Status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="status-footer">
+        <span class="status-note" id="status-note">Verifying attestation service availability...</span>
+        <span class="status-timestamp" id="status-timestamp"></span>
+      </div>
+    </div>
+
+    <!-- Main Action Card -->
+    <div class="glass-card action-card">
+      <div class="action-card-header">
+        <div class="action-info">
+          <h2>Attestation Keybox</h2>
+          <p>Retrieve and verify the latest active hardware-backed keybox.xml</p>
+        </div>
+        <button id="btn-fetch" class="hyper-btn hyper-btn-primary">
+          <svg class="spinner hidden" id="fetch-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+          </svg>
+          <span id="btn-fetch-text">Fetch Keybox</span>
+        </button>
+      </div>
+
+      <!-- Error Alert -->
+      <div id="error-alert" class="alert alert-error hidden">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <div class="alert-title" id="error-title">Fetch Error</div>
+          <div class="alert-desc" id="error-message"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section (Visible after fetch) -->
+    <div id="results-section" class="results-section hidden">
+      <!-- HyperOS 4-Tile Grid -->
+      <div class="grid grid-cards">
+        <div class="meta-tile">
+          <div class="tile-icon">📱</div>
+          <div class="meta-label">Device Identifier</div>
+          <div class="meta-value" id="meta-device-id">--</div>
+        </div>
+        <div class="meta-tile">
+          <div class="tile-icon">🔐</div>
+          <div class="meta-label">Key Algorithms</div>
+          <div class="meta-value" id="meta-algorithms">--</div>
+        </div>
+        <div class="meta-tile">
+          <div class="tile-icon">📜</div>
+          <div class="meta-label">Certificates in Chain</div>
+          <div class="meta-value" id="meta-certs">--</div>
+        </div>
+        <div class="meta-tile">
+          <div class="tile-icon">💾</div>
+          <div class="meta-label">File Payload Size</div>
+          <div class="meta-value" id="meta-size">--</div>
+        </div>
+      </div>
+
+      <!-- Hash Card -->
+      <div class="glass-card hash-card">
+        <div class="hash-header">
+          <div class="hash-title-wrap">
+            <span class="hash-dot"></span>
+            <span class="hash-title">SHA-256 Checksum</span>
+          </div>
+          <button id="btn-copy-hash" class="btn-copy-pill" title="Copy SHA-256">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy Hash</span>
+          </button>
+        </div>
+        <div class="hash-value" id="meta-hash">Computing hash...</div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button id="btn-download-xml" class="hyper-btn hyper-btn-download">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download keybox.xml</span>
+        </button>
+
+        <button id="btn-copy-xml" class="hyper-btn hyper-btn-glass">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy XML</span>
+        </button>
+
+        <button id="btn-copy-b64" class="hyper-btn hyper-btn-glass">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          <span>Copy Base64</span>
+        </button>
+
+        <button id="btn-toggle-viewer" class="hyper-btn hyper-btn-glass">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span id="btn-viewer-text">View XML</span>
+        </button>
+      </div>
+
+      <!-- Collapsible XML Viewer -->
+      <div id="xml-viewer-container" class="glass-card viewer-card hidden">
+        <div class="viewer-header">
+          <span class="viewer-title">XML Structure Preview</span>
+          <div class="viewer-tools">
+            <span class="viewer-lines" id="viewer-line-count">-- lines</span>
+          </div>
+        </div>
+        <div class="code-container">
+          <pre id="xml-code-block"><code></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Usage Guide -->
+    <div class="glass-card guide-card">
+      <div class="guide-header">
+        <span class="guide-icon">⚡</span>
+        <h3>Installation &amp; Integration</h3>
+      </div>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Target Directory:</strong>
+            Place the downloaded <code>keybox.xml</code> into <code>/data/adb/tricky_store/keybox.xml</code>.
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>File Permissions:</strong>
+            Ensure root permissions are restricted: <code>chmod 600 /data/adb/tricky_store/keybox.xml</code>.
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Target Verification:</strong>
+            Verify that <code>com.google.android.gms</code> and <code>com.android.vending</code> are in <code>target.txt</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>AnyBox &bull; Crafted with Xiaomi HyperOS Glass Aesthetics</p>
+    </footer>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

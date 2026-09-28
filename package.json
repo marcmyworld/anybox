@@ -1,0 +1,18 @@
+{
+  "name": "anybox",
+  "version": "1.0.0",
+  "description": "Modern web application to inspect and download active Android attestation keybox payloads",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "keybox",
+    "attestation",
+    "android",
+    "play-integrity",
+    "tricky-store",
+    "always-strong"
+  ],
+  "license": "MIT"
+}
